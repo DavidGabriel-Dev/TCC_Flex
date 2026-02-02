@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Qualidade do Ar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Monitoramento da Qualidade do Ar</h1>
+        <span class="subtitle">Sensores em tempo real</span>
+    </header>
+
+    <main class="container">
+        <div class="grid">
+
+            <div class="card" id="co2Card">
+                <div class="card-header">
+                    ECO₂ (ppm)
+                    <span id="co2-status" class="status"></span>
+                </div>
+                <div class="card-value" id="co2-value">--</div>
+                <canvas id="co2Chart"></canvas>
+            </div>
+
+            <div class="card" id="tvocCard">
+                <div class="card-header">
+                    TVOC (ppb)
+                    <span id="tvoc-status" class="status"></span>
+                </div>
+                <div class="card-value" id="tvoc-value">--</div>
+                <canvas id="tvocChart"></canvas>
+            </div>
+
+            <div class="card" id="tempCard">
+                <div class="card-header">
+                    Temperatura (°C)
+                    <span id="temp-status" class="status"></span>
+                </div>
+                <div class="card-value" id="temp-value">--</div>
+                <canvas id="tempChart"></canvas>
+            </div>
+
+            <div class="card" id="humCard">
+                <div class="card-header">
+                    Umidade (%)
+                    <span id="hum-status" class="status"></span>
+                </div>
+                <div class="card-value" id="hum-value">--</div>
+                <canvas id="humChart"></canvas>
+            </div>
+
+            <div class="card" id="aqiCard">
+                <div class="card-header">
+                    Índice de Qualidade do Ar
+                    <span id="aqi-status" class="status">Carregando...</span>
+                </div>
+
+                <div class="card-body thermometer-layout">
+                    <div class="thermometer-container">
+                        <div class="glass-tube">
+                            <div id="aqi-liquid" class="liquid level-1"></div>
+                        </div>
+                        <div class="bulb"></div>
+                    </div>
+
+                    <div class="value-display">
+                        <span class="card-value" id="aqi-value">--</span>
+                        <span class="unit">Escala 1-5</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+</body>
+</html>

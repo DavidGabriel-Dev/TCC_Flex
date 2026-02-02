@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Salas - Monitoramento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <header class="header">
+        <h1>Ambientes Monitorados</h1>
+        <span class="subtitle">Selecione uma sala para ver os detalhes</span>
+    </header>
+
+    <main class="container">
+        <div id="grid-salas" class="grid-salas">
+            </div>
+    </main>
+
+    <button class="fab" onclick="abrirModal()">
+        <i class="ph ph-plus"></i>
+    </button>
+
+    <div id="modal-sala" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Nova Sala</h2>
+            <input type="text" id="nome-sala" placeholder="Nome da Sala (ex: Lab 3)" required>
+            <input type="text" id="desc-sala" placeholder="Descrição (opcional)">
+            <div class="modal-actions">
+                <button onclick="fecharModal()" class="btn-cancel">Cancelar</button>
+                <button onclick="salvarSala()" class="btn-save">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+:root {
+    --bg: #0f172a;
+    --card: #020617;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Header */
+.header {
+    padding: 20px;
+    border-bottom: 1px solid #1e293b;
+    background: #020617;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* Layout */
+.container {
+    padding: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* Cards */
+.card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+/* Canvas */
+canvas {
+    width: 100% !important;
+    height: 260px !important;
+}
+
+.card.ok {
+  border-left: 6px solid #2ecc71;
+}
+
+.card.alerta {
+  border-left: 6px solid #f1c40f;
+}
+
+.card.fora {
+  border-left: 6px solid #e74c3c;
+}
+
+.status {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+:root {
+    --bg-card: rgba(255, 255, 255, 0.1);
+    --lvl-1: #00e400;
+    --lvl-2: #ffff00;
+    --lvl-3: #ff7e00;
+    --lvl-4: #ff0000;
+    --lvl-5: #7a0000;
+}
+
+#aqi-status {
+    font-weight: bold;
+    color: var(--lvl-1);
+}
+
+/* --- Container do Layout do AQI --- */
+.card-body.thermometer-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px 0;
+}
+
+/* --- Container Principal do Card --- */
+.thermometer-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px 0;
+    min-height: 180px;
+}
+
+/* --- Container Vertical do Termômetro --- */
+.thermometer-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 60px;
+}
+
+/* --- O Tubo de Vidro --- */
+.glass-tube {
+    width: 14px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid #334155;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+    box-shadow: inset 2px 0 5px rgba(0,0,0,0.5);
+}
+
+/* --- Design do termometro --- */
+.liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;
+    box-shadow: 0 0 10px currentColor;
+}
+
+
+.bulb {
+    width: 40px;
+    height: 40px;
+    background: var(--lvl-1);
+    border-radius: 50%;
+    border: 2px solid #334155;
+    margin-top: -8px;
+    position: relative;
+    z-index: 3;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    transition: background-color 0.6s ease;
+}
+
+
+.bulb::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+}
+
+/* --- Texto do Valor Lateral --- */
+.value-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.value-display #aqi-value {
+    font-size: 3.5rem !important;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1;
+    color: var(--text);
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* --- Cores e Níveis (Mantendo suas variáveis) --- */
+.level-1 { height: 20%; background: var(--lvl-1); color: var(--lvl-1); }
+.level-2 { height: 40%; background: var(--lvl-2); color: var(--lvl-2); }
+.level-3 { height: 60%; background: var(--lvl-3); color: var(--lvl-3); }
+.level-4 { height: 80%; background: var(--lvl-4); color: var(--lvl-4); }
+.level-5 { height: 100%; background: var(--lvl-5); color: var(--lvl-5); }
+
+
+/*--- Home ---*/
+
+/* --- Grid de Salas --- */
+.grid-salas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding-bottom: 80px;
+}
+
+.card-sala {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, border 0.2s;
+    border: 1px solid #1e293b;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+}
+
+.card-sala:hover {
+    transform: translateY(-5px);
+    border-color: var(--lvl-1);
+}
+
+.card-sala h3 { margin: 0 0 10px 0; font-size: 1.4rem; }
+.card-sala p { color: var(--muted); margin: 0; }
+
+/* --- Botão Flutuante (FAB) --- */
+.fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: var(--lvl-1);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,228,0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.fab:hover { transform: scale(1.1); }
+
+/* --- Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.hidden { display: none; }
+
+.modal-content {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #fff;
+    border-radius: 8px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.btn-save { background: var(--lvl-1); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;}
+.btn-cancel { background: transparent; color: #fff; border: 1px solid #fff; padding: 10px 20px; border-radius: 8px; cursor: pointer; }

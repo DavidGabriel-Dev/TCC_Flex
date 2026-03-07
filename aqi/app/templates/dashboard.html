@@ -3,63 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Qualidade do Ar</title>
+    <title>Dashboard - Monitoramento</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+    <style>
+        .chart-container {
+            position: relative;
+            height: 250px; 
+            width: 100%;
+            margin-top: 15px;
+        }
+    </style>
+</head>
 <body>
 
     <header class="header">
-        <h1>Monitoramento da Qualidade do Ar</h1>
-        <span class="subtitle">Sensores em tempo real</span>
+        <div>
+            <h1>Monitoramento da Qualidade do Ar</h1>
+            <span class="subtitle" id="status-conexao">Visualização em Tempo Real</span>
+        </div>
+        <a href="{{ url_for('sensors.index') }}" class="btn-logout" style="text-decoration: none; color: white;">
+            <i class="ph ph-arrow-left"></i> Voltar
+        </a>
     </header>
 
     <main class="container">
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Início:</label>
+                <input type="datetime-local" id="dt-inicio">
+            </div>
+            
+            <div class="filter-group">
+                <label>Fim:</label>
+                <input type="datetime-local" id="dt-fim">
+            </div>
+
+            <button onclick="aplicarFiltro()" class="btn-filter">
+                Filtrar <i class="ph ph-funnel"></i>
+            </button>
+            
+            <button onclick="limparFiltro()" class="btn-clear">
+                Limpar
+            </button>
+            <button onclick="baixarCSV()" class="btn-csv" style="background-color: #198754; color: white; border: none; padding: 0 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; height: 40px; margin-left: 10px;">
+                CSV <i class="ph ph-file-csv" style="font-size: 1.2rem;"></i>
+            </button>
+        </div>
+
         <div class="grid">
 
             <div class="card" id="co2Card">
                 <div class="card-header">
-                    ECO₂ (ppm)
-                    <span id="co2-status" class="status"></span>
+                    ECO₂ (ppm) <span id="co2-status"></span>
                 </div>
                 <div class="card-value" id="co2-value">--</div>
-                <canvas id="co2Chart"></canvas>
+                <div class="chart-container">
+                    <canvas id="co2Chart"></canvas>
+                </div>
             </div>
 
             <div class="card" id="tvocCard">
                 <div class="card-header">
-                    TVOC (ppb)
-                    <span id="tvoc-status" class="status"></span>
+                    TVOC (ppb) <span id="tvoc-status"></span>
                 </div>
                 <div class="card-value" id="tvoc-value">--</div>
-                <canvas id="tvocChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="tvocChart"></canvas>
+                </div>
             </div>
 
             <div class="card" id="tempCard">
                 <div class="card-header">
-                    Temperatura (°C)
-                    <span id="temp-status" class="status"></span>
+                    Temperatura (°C) <span id="temp-status"></span>
                 </div>
                 <div class="card-value" id="temp-value">--</div>
-                <canvas id="tempChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="tempChart"></canvas>
+                </div>
             </div>
 
             <div class="card" id="humCard">
                 <div class="card-header">
-                    Umidade (%)
-                    <span id="hum-status" class="status"></span>
+                    Umidade (%) <span id="hum-status"></span>
                 </div>
                 <div class="card-value" id="hum-value">--</div>
-                <canvas id="humChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="humChart"></canvas>
+                </div>
             </div>
 
-            <div class="card" id="aqiCard">
+            <div class="card" id="aqiCard" style="grid-column: span 1;">
                 <div class="card-header">
-                    Índice de Qualidade do Ar
-                    <span id="aqi-status" class="status">Carregando...</span>
+                    Índice AQI
+                    <span id="aqi-status"></span>
                 </div>
-
+                
                 <div class="card-body thermometer-layout">
                     <div class="thermometer-container">
                         <div class="glass-tube">
@@ -69,8 +111,8 @@
                     </div>
 
                     <div class="value-display">
-                        <span class="card-value" id="aqi-value">--</span>
-                        <span class="unit">Escala 1-5</span>
+                        <span class="card-value" id="aqi-value" style="font-size: 3rem;">--</span>
+                        <span class="unit">Nível 1-5</span>
                     </div>
                 </div>
             </div>
@@ -78,7 +120,126 @@
         </div>
     </main>
 
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const SALA_ID = params.get('sala_id');
 
+        let chartCo2 = null;
+        let chartTvoc = null;
+        let chartTemp = null;
+        let chartHum = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!SALA_ID) {
+                document.getElementById("status-conexao").innerText = "⚠ ERRO: ID da Sala não encontrado na URL!";
+                document.getElementById("status-conexao").style.color = "red";
+                return;
+            }
+            carregarDados();
+            setInterval(carregarDados, 10000); 
+        });
+
+        function aplicarFiltro() {
+            carregarDados();
+        }
+
+        function limparFiltro() {
+            document.getElementById('dt-inicio').value = '';
+            document.getElementById('dt-fim').value = '';
+            carregarDados();
+        }
+
+        function carregarDados() {
+            let url = `/api/sensors/historico?sala_id=${SALA_ID}`;
+            
+            const inicio = document.getElementById('dt-inicio').value;
+            const fim = document.getElementById('dt-fim').value;
+            if (inicio && fim) {
+                url += `&inicio=${inicio}&fim=${fim}`;
+            }
+
+            fetch(url, { headers: { 'ngrok-skip-browser-warning': 'true' } })
+                .then(res => {
+                    if (!res.ok) throw new Error("Erro do Servidor");
+                    return res.json();
+                })
+                .then(dados => {
+                    if (!dados || dados.length === 0) {
+                        document.getElementById("status-conexao").innerText = "Aguardando primeira leitura da ESP32...";
+                        return;
+                    }
+
+                    document.getElementById("status-conexao").innerText = "Sincronizado (" + dados.length + " leituras)";
+                    document.getElementById("status-conexao").style.color = "#198754";
+
+                    const atual = dados[dados.length - 1]; 
+
+                    document.getElementById('co2-value').innerText = atual.co2;
+                    document.getElementById('tvoc-value').innerText = atual.tvoc;
+                    document.getElementById('temp-value').innerText = parseFloat(atual.temperature).toFixed(1);
+                    document.getElementById('hum-value').innerText = parseFloat(atual.humidity).toFixed(1);
+                    document.getElementById('aqi-value').innerText = atual.aqi;
+
+                    const aqiLiquid = document.getElementById('aqi-liquid');
+                    if(aqiLiquid) {
+                        aqiLiquid.className = `liquid level-${atual.aqi}`;
+                    }
+
+                    renderizarGraficos(dados);
+                })
+                .catch(err => {
+                    console.error("Erro ao carregar os dados:", err);
+                    document.getElementById("status-conexao").innerText = "⚠ Erro de conexão. Tentando reconectar...";
+                    document.getElementById("status-conexao").style.color = "red";
+                });
+        }
+
+        function renderizarGraficos(dados) {
+            const labels = dados.map(d => d.hora_formatada);
+
+            const opcoes = {
+                responsive: true,
+                maintainAspectRatio: false, 
+                animation: false, 
+                plugins: { legend: { display: false } }
+            };
+
+            // 1. Gráfico CO2
+            const ctxCo2 = document.getElementById('co2Chart').getContext('2d');
+            if (chartCo2) chartCo2.destroy();
+            chartCo2 = new Chart(ctxCo2, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ data: dados.map(d => d.co2), borderColor: '#0d6efd', backgroundColor: 'rgba(13, 110, 253, 0.1)', tension: 0.3, fill: true, pointRadius: 2 }] },
+                options: opcoes
+            });
+
+            // 2. Gráfico TVOC
+            const ctxTvoc = document.getElementById('tvocChart').getContext('2d');
+            if (chartTvoc) chartTvoc.destroy();
+            chartTvoc = new Chart(ctxTvoc, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ data: dados.map(d => d.tvoc), borderColor: '#ffc107', backgroundColor: 'rgba(255, 193, 7, 0.1)', tension: 0.3, fill: true, pointRadius: 2 }] },
+                options: opcoes
+            });
+
+            // 3. Gráfico Temperatura
+            const ctxTemp = document.getElementById('tempChart').getContext('2d');
+            if (chartTemp) chartTemp.destroy();
+            chartTemp = new Chart(ctxTemp, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ data: dados.map(d => d.temperature), borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', tension: 0.3, fill: true, pointRadius: 2 }] },
+                options: opcoes
+            });
+
+            // 4. Gráfico Umidade
+            const ctxHum = document.getElementById('humChart').getContext('2d');
+            if (chartHum) chartHum.destroy();
+            chartHum = new Chart(ctxHum, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ data: dados.map(d => d.humidity), borderColor: '#0dcaf0', backgroundColor: 'rgba(13, 202, 240, 0.1)', tension: 0.3, fill: true, pointRadius: 2 }] },
+                options: opcoes
+            });
+        }
+    </script>
 </body>
 </html>

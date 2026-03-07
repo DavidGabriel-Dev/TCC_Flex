@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Monitoramento</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body class="login-page">
+
+    <div class="login-card">
+        <i class="ph ph-lock-key" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;"></i>
+        
+        <h2>Acesso Restrito</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div style="background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #ef4444; font-size: 0.9rem;">
+                    {% for message in messages %}
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <i class="ph ph-warning-circle"></i> {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('sensors.login') }}">
+            
+            <div style="text-align: left;">
+                <label style="color: #94a3b8; font-size: 0.9rem;">Usuário</label>
+                <input type="text" name="username" placeholder="Seu usuário" required>
+            </div>
+
+            <div style="text-align: left; margin-top: 10px;">
+                <label style="color: #94a3b8; font-size: 0.9rem;">Senha</label>
+                <input type="password" name="password" placeholder="Sua senha" required>
+            </div>
+
+            <button type="submit">Entrar no Sistema</button>
+        </form>
+
+        <div style="margin-top: 20px; font-size: 0.9rem; color: #94a3b8;">
+            Não tem uma conta? 
+            <a href="{{ url_for('sensors.register') }}" style="color: #3b82f6; font-weight: bold; text-decoration: none;">
+                Cadastre-se aqui
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

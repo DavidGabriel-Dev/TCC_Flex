@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212; 
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-card {
+            background: #1e1e1e; 
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .icon-user { font-size: 3rem; color: #0d6efd; margin-bottom: 1rem; }
+        
+        h2 { color: #ffffff; margin-bottom: 1.5rem; font-weight: 600; }
+        
+        .input-group { position: relative; margin-bottom: 1rem; }
+        
+        .input-group input, .input-group select {
+            width: 100%; padding: 12px 12px 12px 40px;
+            background-color: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px; font-size: 1rem;
+            color: #fff; 
+            box-sizing: border-box; transition: border-color 0.3s;
+            appearance: none; -webkit-appearance: none;
+        }
+        
+        .input-group input::placeholder { color: #888; }
+
+        .input-group input:focus, .input-group select:focus { 
+            border-color: #0d6efd; outline: none; background-color: #333;
+        }
+        
+        .input-group i {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: #aaa; font-size: 1.2rem; 
+            pointer-events: none;
+        }
+
+        .select-arrow {
+            position: absolute; right: 12px !important; left: auto !important;
+            font-size: 1rem !important;
+        }
+
+        button {
+            width: 100%; padding: 12px; background-color: #0d6efd; color: white;
+            border: none; border-radius: 8px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.3s; margin-top: 10px;
+        }
+        button:hover { background-color: #0b5ed7; }
+        
+        .alert { background-color: #2c0b0e; color: #ea868f; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #842029; }
+        
+        .link-login { display: block; margin-top: 15px; color: #bbb; text-decoration: none; font-size: 0.9rem; }
+        .link-login:hover { color: #0d6efd; text-decoration: underline; }
+
+        #adminCodeDiv {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <i class="ph ph-user-plus icon-user"></i>
+        <h2>Nova Conta</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert"><i class="ph ph-warning-circle"></i> {{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('sensors.register') }}">
+            <div class="input-group">
+                <i class="ph ph-user"></i>
+                <input type="text" name="username" placeholder="Escolha um Usuário" required>
+            </div>
+            <div class="input-group">
+                <i class="ph ph-lock-key"></i>
+                <input type="password" name="password" placeholder="Escolha uma Senha" required>
+            </div>
+
+            <div class="input-group">
+                <i class="ph ph-identification-badge"></i>
+                <select name="role" id="roleSelect" onchange="toggleAdminCode()" required>
+                    <option value="comum">Usuário Comum (Visualizador)</option>
+                    <option value="admin">Administrador (Total)</option>
+                </select>
+                <i class="ph ph-caret-down select-arrow"></i>
+            </div>
+
+            <div class="input-group" id="adminCodeDiv">
+                <i class="ph ph-shield-check" style="color: #ea868f;"></i>
+                <input type="password" name="admin_code" placeholder="Código de Segurança Admin" style="border-color: #842029;">
+            </div>
+
+            <button type="submit">Cadastrar</button>
+        </form>
+
+        <a href="{{ url_for('sensors.login') }}" class="link-login">
+            Já tem uma conta? Faça login
+        </a>
+    </div>
+
+    <script>
+        function toggleAdminCode() {
+            var roleSelect = document.getElementById("roleSelect");
+            var adminDiv = document.getElementById("adminCodeDiv");
+            var adminInput = adminDiv.querySelector("input");
+
+            if (roleSelect.value === "admin") {
+                adminDiv.style.display = "block";
+                adminInput.required = true;
+                adminInput.focus();
+            } else {
+                adminDiv.style.display = "none";
+                adminInput.required = false;
+                adminInput.value = "";
+            }
+        }
+    </script>
+</body>
+</html>

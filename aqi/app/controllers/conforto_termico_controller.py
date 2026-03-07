@@ -12,7 +12,7 @@ class ConfortoTermicoController:
     def avaliar(self, dados: Dict[str, float]) -> Dict[str, Any]:
         avaliacoes = {}
 
-        #Temperatura
+        
         temp = dados.get("temperatura")
         if temp is not None:
             limites = self.LIMITES["temperatura"]
@@ -24,7 +24,7 @@ class ConfortoTermicoController:
                 "limite_max": limites["max"]
             }
 
-        #Umidade
+
         umid = dados.get("umidade")
         if umid is not None:
             limites = self.LIMITES["umidade"]
@@ -36,7 +36,7 @@ class ConfortoTermicoController:
                 "limite_max": limites["max"]
             }
 
-        #CO2
+        
         co2 = dados.get("co2")
         if co2 is not None:
             limite = self.LIMITES["co2"]["max"]
@@ -52,7 +52,7 @@ class ConfortoTermicoController:
                 "limite_max": limite
             }
 
-        #TVOC
+        
         tvoc = dados.get("tvoc")
         if tvoc is not None:
             limite = self.LIMITES["tvoc"]["max"]
@@ -63,13 +63,12 @@ class ConfortoTermicoController:
                 "limite_max": limite
             }
 
-        #TRATAMENTO DE AQI
+        
         aqi_bruto = dados.get("aqi")
         
         if aqi_bruto is not None:
             aqi_valor = int(aqi_bruto)
         else:
-            #Fallback: Se o dado for NULL
             valor_co2_ref = co2 if co2 is not None else 400
             if valor_co2_ref <= 600: aqi_valor = 1
             elif valor_co2_ref <= 1000: aqi_valor = 2

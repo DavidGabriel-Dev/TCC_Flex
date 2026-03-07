@@ -1,204 +1,193 @@
-// Obtém o ID da sala pela URL
-const params = new URLSearchParams(window.location.search);
-const SALA_ID = params.get('sala_id');
+// Variáveis globais para armazenar os gráficos
+let chartAir = null;
+let chartClimate = null;
 
-// Validação de Segurança
-if (!SALA_ID) {
-    alert("Nenhuma sala selecionada! Redirecionando para a Home...");
-    window.location.href = "/";
+document.addEventListener("DOMContentLoaded", () => {
+    // Carrega os dados assim que a página abre
+    carregarDados();
+    
+    // Configura para atualizar os dados sozinho a cada 10 segundos
+    setInterval(carregarDados, 10000);
+});
+
+function carregarDados() {
+    if (typeof SALA_ID === 'undefined' || !SALA_ID) return;
+
+    // Adicionamos o cabeçalho do Ngrok no Fetch (Javascript)
+    fetch(`/api/sensors/historico?sala_id=${SALA_ID}`, {
+        headers: {
+            'ngrok-skip-browser-warning': 'true' // <-- O PASSE LIVRE AQUI
+        }
+    })
+    .then(res => {
+        // Se a resposta não for JSON (ex: página do Ngrok), deteta o erro
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("O Ngrok bloqueou o pedido ou a sessão expirou.");
+        }
+        return res.json();
+    })
+    .then(dados => {
+        if (dados.error) {
+            console.error(dados.error);
+            return;
+        }
+        
+        if (dados.length === 0) {
+            document.getElementById('sala-titulo').innerText = "Sala " + SALA_ID;
+            document.getElementById('sala-desc').innerText = "Aguardando dados da ESP32...";
+            return;
+        }
+
+        const atual = dados[dados.length - 1];
+        
+        document.getElementById('sala-titulo').innerText = "Monitoramento - Sala " + SALA_ID;
+        document.getElementById('sala-desc').innerText = "Última leitura: " + atual.hora_formatada;
+        
+        document.getElementById('val-co2').innerText = atual.co2;
+        document.getElementById('val-tvoc').innerText = atual.tvoc;
+        
+        if (atual.temperature !== null) {
+            document.getElementById('val-temp').innerText = parseFloat(atual.temperature).toFixed(1) + "°C";
+        }
+        if (atual.humidity !== null) {
+            document.getElementById('val-hum').innerText = parseFloat(atual.humidity).toFixed(0) + "%";
+        }
+
+        renderizarGraficos(dados);
+    })
+    .catch(err => {
+        console.error("Erro ao desenhar gráficos:", err);
+        document.getElementById('sala-desc').innerText = "Erro ao carregar dados. Prima F5.";
+    });
 }
 
-// Definição das Rotas da API baseadas no ID da sala
-const API_URLS = {
-    DATA: `/api/sensors/data/${SALA_ID}`,
-    CONFORTO: `/api/sensors/conforto/${SALA_ID}`
-};
+function renderizarGraficos(dados) {
+    // Separa os dados em listas para o Chart.js
+    const labels = dados.map(d => d.hora_formatada);
+    const co2Data = dados.map(d => d.co2);
+    const tvocData = dados.map(d => d.tvoc);
+    const tempData = dados.map(d => d.temperature);
+    const humData = dados.map(d => d.humidity);
 
+    // ==========================================
+    // GRÁFICO 1: Qualidade do Ar (CO2 e TVOC)
+    // ==========================================
+    const ctxAir = document.getElementById('chartAirQuality').getContext('2d');
+    
+    // Destrói o gráfico antigo antes de desenhar o novo (evita sobreposição)
+    if (chartAir) chartAir.destroy();
 
-// CONFIGURAÇÃO DOS GRÁFICOS (CHART.JS)
-
-// Função helper para criar gráficos padronizados
-function createChart(ctx, label, color) {
-    return new Chart(ctx, {
+    chartAir = new Chart(ctxAir, {
         type: 'line',
         data: {
-            labels: [],
-            datasets: [{
-                label: label,
-                data: [],
-                borderColor: color,
-                backgroundColor: color,
-                borderWidth: 2,
-                tension: 0.3,
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                fill: false
-            }]
+            labels: labels,
+            datasets: [
+                { 
+                    label: 'CO2 (ppm)', 
+                    data: co2Data, 
+                    borderColor: '#0d6efd', 
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)', 
+                    tension: 0.3, 
+                    yAxisID: 'y' 
+                },
+                { 
+                    label: 'TVOC (ppb)', 
+                    data: tvocData, 
+                    borderColor: '#ffc107', 
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)', 
+                    tension: 0.3, 
+                    yAxisID: 'y1' 
+                }
+            ]
         },
         options: {
-            responsive: true,
+            responsive: true, 
             maintainAspectRatio: false,
-            animation: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true }
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { labels: { color: '#fff' } } 
             },
             scales: {
-                x: {
-                    display: true,
-                    grid: { display: false },
-                    ticks: { maxTicksLimit: 6, color: '#94a3b8' }
+                x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                y: { type: 'linear', display: true, position: 'left', ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#aaa' }, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // ==========================================
+    // GRÁFICO 2: Clima (Temperatura e Umidade)
+    // ==========================================
+    const ctxClimate = document.getElementById('chartClimate').getContext('2d');
+    
+    if (chartClimate) chartClimate.destroy();
+
+    chartClimate = new Chart(ctxClimate, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                { 
+                    label: 'Temperatura (°C)', 
+                    data: tempData, 
+                    borderColor: '#dc3545', 
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)', 
+                    tension: 0.3, 
+                    yAxisID: 'y' 
                 },
-                y: {
-                    display: true,
-                    grid: { color: '#334155' },
-                    ticks: { color: '#94a3b8' },
-                    beginAtZero: false
+                { 
+                    label: 'Umidade (%)', 
+                    data: humData, 
+                    borderColor: '#0dcaf0', 
+                    backgroundColor: 'rgba(13, 202, 240, 0.1)', 
+                    tension: 0.3, 
+                    yAxisID: 'y1' 
                 }
+            ]
+        },
+        options: {
+            responsive: true, 
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { labels: { color: '#fff' } } 
+            },
+            scales: {
+                x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                y: { type: 'linear', display: true, position: 'left', ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#aaa' }, grid: { drawOnChartArea: false } }
             }
         }
     });
 }
+function baixarCSV() {
+    const inicio = document.getElementById('dt-inicio').value;
+    const fim = document.getElementById('dt-fim').value;
 
-// Inicialização das Instâncias dos Gráficos
-const charts = {
-    co2: createChart(document.getElementById('co2Chart'), 'CO₂ (ppm)', '#ef4444'),
-    tvoc: createChart(document.getElementById('tvocChart'), 'TVOC (ppb)', '#f59e0b'),
-    temp: createChart(document.getElementById('tempChart'), 'Temperatura (°C)', '#3b82f6'),
-    hum: createChart(document.getElementById('humChart'), 'Umidade (%)', '#10b981')
-};
+    if (!SALA_ID) return;
 
-
-//LÓGICA DE BUSCA E ATUALIZAÇÃO
-
-// Chamada a cada 5 segundos
-async function updateDashboard() {
-    await Promise.all([
-        updateCharts(),
-        updateConforto()
-    ]);
-}
-
-//Atualização dos Gráficos
-async function updateCharts() {
-    try {
-        const response = await fetch(API_URLS.DATA);
-        if (!response.ok) return;
-        
-        const data = await response.json();
-        
-        // Pega os 50 dados mais recentes e inverte para ordem cronológica
-        const recentData = data.slice(0, 50).reverse();
-
-        // Cria array de horários
-        const labels = recentData.map(d => 
-            new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        );
-
-        // Atualiza cada gráfico
-        updateSingleChart(charts.co2, labels, recentData.map(d => d.co2));
-        updateSingleChart(charts.tvoc, labels, recentData.map(d => d.tvoc));
-        updateSingleChart(charts.temp, labels, recentData.map(d => d.temperature));
-        updateSingleChart(charts.hum, labels, recentData.map(d => d.humidity));
-
-    } catch (error) {
-        console.error("Erro ao atualizar gráficos:", error);
+    let url = `/api/sensors/exportar_csv?sala_id=${SALA_ID}`;
+    if (inicio && fim) {
+        url += `&inicio=${inicio}&fim=${fim}`;
     }
+
+    // Fetch com bypass do ngrok
+    fetch(url, {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Erro ao gerar arquivo");
+        return response.blob();
+    })
+    .then(blob => {
+        const urlBlob = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = urlBlob;
+        a.download = `relatorio_sala_${SALA_ID}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    })
+    .catch(err => alert("Erro: " + err.message));
 }
-
-function updateSingleChart(chart, labels, data) {
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = data;
-    chart.update();
-}
-
-//Atualização dos Cards e Termômetro
-async function updateConforto() {
-    try {
-        const response = await fetch(API_URLS.CONFORTO);
-        if (!response.ok) return;
-
-        const data = await response.json();
-        if (!data.avaliacoes) return;
-
-        const a = data.avaliacoes;
-
-        // Atualiza Cards
-        updateCard('co2', a.co2.valor + ' ppm', a.co2.status);
-        updateCard('tvoc', a.tvoc.valor + ' ppb', a.tvoc.status);
-        updateCard('temp', a.temperatura.valor + ' °C', a.temperatura.status);
-        updateCard('hum', a.umidade.valor + ' %', a.umidade.status);
-
-        // Atualiza AQI
-        updateAQI(a.aqi.valor, a.aqi.status);
-
-    } catch (error) {
-        console.error("Erro ao atualizar conforto:", error);
-    }
-}
-
-// Helper para atualizar texto e classe CSS dos cards
-function updateCard(type, value, status) {
-    const valueEl = document.getElementById(`${type}-value`);
-    const statusEl = document.getElementById(`${type}-status`);
-    const cardEl = document.getElementById(`${type}Card`);
-
-    if (valueEl) valueEl.innerText = value;
-    if (statusEl) statusEl.innerText = status;
-
-    // Remove classes antigas e adiciona nova baseada no status
-    if (cardEl) {
-        cardEl.classList.remove('ok', 'alerta', 'fora');
-        if (status === 'OK' || status === 'Ideal' || status === 'Excelente') cardEl.classList.add('ok');
-        else if (status === 'ALERTA' || status === 'Moderado') cardEl.classList.add('alerta');
-        else cardEl.classList.add('fora');
-    }
-}
-
-// Helper para o Termômetro Visual
-function updateAQI(valor, statusTexto) {
-    const liquid = document.getElementById('aqi-liquid');
-    const bulb = document.querySelector('.bulb');
-    const valueText = document.getElementById('aqi-value');
-    const statusText = document.getElementById('aqi-status');
-
-    if (!liquid) return;
-
-    // Atualiza Textos
-    if (valueText) valueText.innerText = valor;
-    if (statusText) statusText.innerText = statusTexto;
-
-    // Remove níveis antigos
-    liquid.classList.remove('level-1', 'level-2', 'level-3', 'level-4', 'level-5');
-
-    // Mapeamento de Cores e Classes
-    const config = {
-        1: { class: 'level-1', color: '#00e400' }, // Excelente
-        2: { class: 'level-2', color: '#ffff00' }, // Bom
-        3: { class: 'level-3', color: '#ff7e00' }, // Moderado
-        4: { class: 'level-4', color: '#ff0000' }, // Ruim
-        5: { class: 'level-5', color: '#7a0000' }  // Péssimo
-    };
-
-    const current = config[valor] || config[1];
-
-    // Aplica nova altura e cor
-    liquid.classList.add(current.class);
-    
-    // Sincroniza cores dos elementos
-    if (bulb) bulb.style.backgroundColor = current.color;
-    if (valueText) valueText.style.color = current.color;
-    if (statusText) statusText.style.color = current.color;
-}
-
-//EXECUÇÃO
-
-// Primeira chamada imediata
-updateDashboard();
-
-// Loop a cada 5 segundos
-setInterval(updateDashboard, 5000);

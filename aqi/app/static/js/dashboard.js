@@ -1,26 +1,21 @@
-// Variáveis globais para armazenar os gráficos
 let chartAir = null;
 let chartClimate = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Carrega os dados assim que a página abre
     carregarDados();
     
-    // Configura para atualizar os dados sozinho a cada 10 segundos
     setInterval(carregarDados, 10000);
 });
 
 function carregarDados() {
     if (typeof SALA_ID === 'undefined' || !SALA_ID) return;
 
-    // Adicionamos o cabeçalho do Ngrok no Fetch (Javascript)
     fetch(`/api/sensors/historico?sala_id=${SALA_ID}`, {
         headers: {
-            'ngrok-skip-browser-warning': 'true' // <-- O PASSE LIVRE AQUI
+            'ngrok-skip-browser-warning': 'true' 
         }
     })
     .then(res => {
-        // Se a resposta não for JSON (ex: página do Ngrok), deteta o erro
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
             throw new TypeError("O Ngrok bloqueou o pedido ou a sessão expirou.");
@@ -63,19 +58,14 @@ function carregarDados() {
 }
 
 function renderizarGraficos(dados) {
-    // Separa os dados em listas para o Chart.js
     const labels = dados.map(d => d.hora_formatada);
     const co2Data = dados.map(d => d.co2);
     const tvocData = dados.map(d => d.tvoc);
     const tempData = dados.map(d => d.temperature);
     const humData = dados.map(d => d.humidity);
 
-    // ==========================================
-    // GRÁFICO 1: Qualidade do Ar (CO2 e TVOC)
-    // ==========================================
     const ctxAir = document.getElementById('chartAirQuality').getContext('2d');
     
-    // Destrói o gráfico antigo antes de desenhar o novo (evita sobreposição)
     if (chartAir) chartAir.destroy();
 
     chartAir = new Chart(ctxAir, {
@@ -116,9 +106,6 @@ function renderizarGraficos(dados) {
         }
     });
 
-    // ==========================================
-    // GRÁFICO 2: Clima (Temperatura e Umidade)
-    // ==========================================
     const ctxClimate = document.getElementById('chartClimate').getContext('2d');
     
     if (chartClimate) chartClimate.destroy();
@@ -172,7 +159,6 @@ function baixarCSV() {
         url += `&inicio=${inicio}&fim=${fim}`;
     }
 
-    // Fetch com bypass do ngrok
     fetch(url, {
         headers: { 'ngrok-skip-browser-warning': 'true' }
     })

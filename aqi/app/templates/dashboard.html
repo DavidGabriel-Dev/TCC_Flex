@@ -204,7 +204,6 @@
                 plugins: { legend: { display: false } }
             };
 
-            // 1. Gráfico CO2
             const ctxCo2 = document.getElementById('co2Chart').getContext('2d');
             if (chartCo2) chartCo2.destroy();
             chartCo2 = new Chart(ctxCo2, {
@@ -213,7 +212,6 @@
                 options: opcoes
             });
 
-            // 2. Gráfico TVOC
             const ctxTvoc = document.getElementById('tvocChart').getContext('2d');
             if (chartTvoc) chartTvoc.destroy();
             chartTvoc = new Chart(ctxTvoc, {
@@ -222,7 +220,6 @@
                 options: opcoes
             });
 
-            // 3. Gráfico Temperatura
             const ctxTemp = document.getElementById('tempChart').getContext('2d');
             if (chartTemp) chartTemp.destroy();
             chartTemp = new Chart(ctxTemp, {
@@ -231,7 +228,6 @@
                 options: opcoes
             });
 
-            // 4. Gráfico Umidade
             const ctxHum = document.getElementById('humChart').getContext('2d');
             if (chartHum) chartHum.destroy();
             chartHum = new Chart(ctxHum, {
@@ -239,6 +235,27 @@
                 data: { labels: labels, datasets: [{ data: dados.map(d => d.humidity), borderColor: '#0dcaf0', backgroundColor: 'rgba(13, 202, 240, 0.1)', tension: 0.3, fill: true, pointRadius: 2 }] },
                 options: opcoes
             });
+        }
+        function baixarCSV() {
+            const inicio = document.getElementById('dt-inicio').value;
+            const fim = document.getElementById('dt-fim').value;
+
+            if (!SALA_ID) {
+                alert("ID da sala não encontrado na URL!");
+                return;
+            }
+
+            let url = `/api/sensors/exportar_csv?sala_id=${SALA_ID}`;
+            if (inicio && fim) {
+                url += `&inicio=${inicio}&fim=${fim}`;
+            }
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `relatorio_sala_${SALA_ID}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>

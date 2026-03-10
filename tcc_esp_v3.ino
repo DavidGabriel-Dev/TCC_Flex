@@ -124,7 +124,6 @@ void loop() {
 
       if (configUrl != "") {
         http.begin(client, configUrl.c_str());
-        http.addHeader("ngrok-skip-browser-warning", "true");
         if (http.GET() > 0) {
           JsonDocument docConfig;
           if (!deserializeJson(docConfig, http.getString())) {
@@ -141,7 +140,6 @@ void loop() {
         if (serverUrl != "") {
           http.begin(client, serverUrl.c_str());
           http.addHeader("Content-Type", "application/json");
-          http.addHeader("ngrok-skip-browser-warning", "true");
 
           JsonDocument doc;
           doc["sala_id"] = salaId;

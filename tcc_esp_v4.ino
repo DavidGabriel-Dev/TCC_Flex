@@ -118,9 +118,8 @@ void loop() {
                   (WiFi.status() == WL_CONNECTED ? "CONECTADO" : "DESCONECTADO"));
 
     if (WiFi.status() == WL_CONNECTED) {
-      WiFiClientSecure client;
-      client.setInsecure();
-      HTTPClient http;
+      WiFiClient client; 
+      HTTPClient http;   
 
       if (configUrl != "") {
         http.begin(client, configUrl.c_str());
